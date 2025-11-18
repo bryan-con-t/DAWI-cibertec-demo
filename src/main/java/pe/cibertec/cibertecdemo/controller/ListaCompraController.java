@@ -1,5 +1,9 @@
 package pe.cibertec.cibertecdemo.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.cibertec.cibertecdemo.model.ItemLista;
@@ -60,5 +64,57 @@ public class ListaCompraController {
     @GetMapping("/usuario/{idUsuario}")
     public List<ListaCompra> historial(@PathVariable Long idUsuario) {
         return listaRepo.findByUsuarioId(idUsuario);
+    }
+
+    // Obtener ítems filtrando por estado
+    @GetMapping("/{idLista}/items")
+    public ResponseEntity<List<ItemLista>> obtenerItemsPorEstado(
+            @PathVariable Long idLista,
+            @RequestParam String estado
+    ) {
+        List<ItemLista> items = itemRepo.buscarPorestado(idLista, estado);
+        if (items.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(items);
+    }
+
+    // Obtener detalles de lista
+    @GetMapping("/{idLista}")
+    public ResponseEntity<List<ItemLista>> detalle(
+            @PathVariable Long idLista
+    ) {
+        List<ItemLista> items = itemRepo.detalleLista(idLista);
+        if (items.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(items);
+    }
+
+    // Obtener historial con paginación
+    @GetMapping("/usuario/{idUsuario}/paginado")
+    public Page<ListaCompra> historialPaginado(
+            @PathVariable Long idUsuario,
+            @RequestParam int page,
+            @RequestParam int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return listaRepo.findByUsuarioId(idUsuario, pageable);
+    }
+
+    // Obtener historial con paginación y ordenamiento dinámico
+    @GetMapping("/usuario/{idUsuario}/paginado/ordenado")
+    public Page<ListaCompra> historialPaginado(
+            @PathVariable Long idUsuario,
+            @RequestParam int page,
+            @RequestParam int size,
+            @RequestParam(defaultValue = "fechaCreacion") String sortBy,
+            @RequestParam(defaultValue = "desc") String order
+    ) {
+        Sort sort = order.equalsIgnoreCase("asc") ?
+                Sort.by(sortBy).ascending() :
+                Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return listaRepo.findByUsuarioId(idUsuario, pageable);
     }
 }

@@ -1,5 +1,8 @@
 package pe.cibertec.cibertecdemo.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.cibertec.cibertecdemo.model.Producto;
@@ -45,5 +48,26 @@ public class ProductoController {
             Producto actualizado = productoRepo.save(prod);
             return ResponseEntity.ok(actualizado);
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/buscarPorNombre")
+    public ResponseEntity<List<Producto>> buscarPorNombre(
+            @RequestParam String texto
+    ) {
+        List<Producto> resultados = productoRepo.buscarPorNombre(texto);
+        if (resultados.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(resultados);
+    }
+
+    @GetMapping("/buscar")
+    public Page<Producto> buscar(
+            @RequestParam String nombre,
+            @RequestParam int page,
+            @RequestParam int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productoRepo.findByNombreContainingIgnoreCase(nombre, pageable);
     }
 }

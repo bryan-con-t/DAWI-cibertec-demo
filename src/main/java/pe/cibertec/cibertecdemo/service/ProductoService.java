@@ -34,10 +34,13 @@ public class ProductoService {
         }
     }
 
-    // Fetching con Entity Graph (solo nombre y precio)
+    // Fetching con Entity Graph (solo nombre y precio) JPQL
     public List<Producto> listarTodos() {
         return em.createQuery("SELECT p FROM Producto p", Producto.class)
                 .setHint("org.hibernate.fetchSize", 5)
                 .getResultList();
     }
+
+    //Buscar productos + paginado
+
 }
