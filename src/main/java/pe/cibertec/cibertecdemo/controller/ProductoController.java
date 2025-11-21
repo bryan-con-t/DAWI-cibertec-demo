@@ -62,12 +62,13 @@ public class ProductoController {
     }
 
     @GetMapping("/buscar")
-    public Page<Producto> buscar(
+    public ResponseEntity<Page<Producto>> buscar(
             @RequestParam String nombre,
             @RequestParam int page,
             @RequestParam int size
     ) {
         Pageable pageable = PageRequest.of(page, size);
-        return productoRepo.findByNombreContainingIgnoreCase(nombre, pageable);
+        Page<Producto> resultado = productoService.buscarPorNombre(nombre, pageable);
+        return ResponseEntity.ok(resultado);
     }
 }
