@@ -11,6 +11,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+
+import java.util.List;
 
 @Configuration
 public class SecurityConfig {
@@ -40,29 +45,42 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // 3. Configuración de rutas y permisos
+    // 3. Configuración de seguridad y CORS
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         return http
-                .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF para Postman
+                .csrf(csrf -> csrf.disable()) // CSRF deshabilitado para APIs
+                .cors(Customizer.withDefaults()) // Habilitamos CORS
                 .authorizeHttpRequests(auth -> auth
-                        // RUTAS PÚBLICAS ***********************
+                        // RUTAS PÚBLICAS
                         .requestMatchers(
                                 "/api/public/**",
-                                "/api/usuarios/registro",    // REGISTRO NO REQUIERE LOGIN
-                                "/api/auth/login"            // LOGIN NO REQUIERE LOGIN
+                                "/api/usuarios/registro",
+                                "/api/auth/login"
                         ).permitAll()
 
-                        // RUTAS PROTEGIDAS ********************
+                        // RUTAS PROTEGIDAS
                         .requestMatchers("/api/productos/**").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/listas/**").hasRole("USER")
 
                         // TODO LO DEMÁS REQUIERE AUTENTICACIÓN
                         .anyRequest().authenticated()
                 )
-
-                .httpBasic(Customizer.withDefaults()) // Personalización autenticación básica
+                .httpBasic(Customizer.withDefaults())
                 .build();
+    }
+
+    // 4. Configuración global de CORS
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+        config.setAllowedOrigins(List.of("http://localhost:4200")); // Angular
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return new CorsFilter(source);
     }
 }
